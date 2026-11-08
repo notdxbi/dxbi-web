@@ -38,7 +38,7 @@ jobs:
           tag=$(curl -fsSL https://api.github.com/repos/notdxbi/dxbi-stremio/releases/latest | python3 -c "import json,sys; print(json.load(sys.stdin)['tag_name'])")
           echo "DXBI_TAG=$tag" >> "$GITHUB_ENV"
           git clone -q --depth 1 --branch "$tag" https://github.com/notdxbi/dxbi-stremio.git ../dxbi-stremio
-          git clone -q --depth 1 https://github.com/${{ github.repository }}.git ../dxbi-web
+          git clone -q --depth 1 https://github.com/${{ github.repository }}.git ../branding
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -51,7 +51,7 @@ jobs:
         run: pnpm build
       - name: Dress it as dx.bi (name, icons, dx.bi built in)
         run: |
-          python3 ../dxbi-web/tools/brand.py build ../dxbi-stremio ../dxbi-web
+          python3 ../branding/tools/brand.py build ../dxbi-stremio ../branding
           grep -q 'dxbi/web.js' build/index.html
           grep -q '"name": "dx.bi"' build/manifest.json
       - name: Record what was built
