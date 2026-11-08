@@ -1,0 +1,72 @@
+    <!-- dx.bi loading screen (added to index.html by tools/brand.py): head part -->
+    <script>
+        // dx.bi's intro plays once per visit; after that, the loading screen shows the name instead
+        try { if (sessionStorage.getItem("dxbi.splash") === "1") document.documentElement.classList.add("dxbi-boot-again"); } catch (_) {}
+        // the name appears in its own lettering, never in a stand-in font first
+        function dxbiBootFont() {
+            var on = function () { document.documentElement.classList.add("dxbi-boot-font"); };
+            try { document.fonts.load('400 1em "Bebas Neue"', "DX.BI").then(on, on); } catch (_) { on(); }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=block&text=DX.BI" media="print" onload="this.media='all'; dxbiBootFont()">
+    <style id="dxbi-boot-style">
+        html, body { background: #000 !important; }
+        #dxbi-boot {
+            position: fixed; inset: 0; z-index: 99999; background: #000;
+            display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.5s ease, visibility 0.5s;
+        }
+        #dxbi-boot.out { opacity: 0; visibility: hidden; pointer-events: none; }
+        #dxbi-boot .dxbi-boot-mark {
+            display: none;
+            font: 400 clamp(4rem, 12vw, 10rem)/1 "Bebas Neue", sans-serif;
+            color: #e50914; letter-spacing: 0.01em;
+            text-shadow: 0 0 2.5rem rgba(229, 9, 20, 0.35);
+            animation: dxbi-boot-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        }
+        .dxbi-boot-again.dxbi-boot-font #dxbi-boot .dxbi-boot-mark { display: block; }
+        #dxbi-boot .dxbi-boot-bar {
+            position: absolute; left: 50%; bottom: 18%; width: 7.5rem; height: 2px; margin-left: -3.75rem;
+            border-radius: 2px; background: rgba(255, 255, 255, 0.08); overflow: hidden;
+        }
+        #dxbi-boot .dxbi-boot-bar::after {
+            content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 40%;
+            border-radius: 2px; background: #e50914;
+            animation: dxbi-boot-run 1.1s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+        }
+        @keyframes dxbi-boot-in { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
+        @keyframes dxbi-boot-run { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+        @media (prefers-reduced-motion: reduce) {
+            #dxbi-boot .dxbi-boot-mark, #dxbi-boot .dxbi-boot-bar::after { animation: none; }
+        }
+    </style>
+<!--body--><div id="dxbi-boot" aria-label="dx.bi is loading" role="progressbar"><div class="dxbi-boot-mark">DX.BI</div><div class="dxbi-boot-bar"></div></div>
+<script>
+(function () {
+    var boot = document.getElementById("dxbi-boot");
+    var start = Date.now();
+    var lookAt = 0;
+    // something to show: a row of titles, a title, the player, or a page of the app
+    var READY = '[class*="meta-item-container"], [class*="metadetails-container"], [class*="player-container"], [class*="settings-content"], [class*="addons-content"], [class*="library-container"], [class*="discover-content"], [class*="search-container"], [class*="intro-container"], .dx-hero';
+    function gone(fade) {
+        if (!boot) return;
+        var el = boot;
+        boot = null;
+        clearInterval(timer);
+        if (!fade) { el.remove(); return; }
+        el.classList.add("out");
+        setTimeout(function () { el.remove(); }, 600);
+    }
+    var timer = setInterval(function () {
+        // dx.bi's intro starts on black, over this: it takes it from here
+        if (document.querySelector(".dx-splash")) return gone(false);
+        if (!lookAt && document.getElementById("dx-builtin-theme")) lookAt = Date.now();
+        var now = Date.now();
+        // (home: once dx.bi's banner is up, not Stremio's rows before it)
+        var ready = /^#?\/?$/.test(location.hash) ? document.querySelector(".dx-hero") : document.querySelector(READY);
+        if (lookAt && ((ready && now - lookAt > 200) || now - lookAt > 4000)) return gone(true);
+        if (now - start > 15000) gone(true); // never stuck behind it
+    }, 50);
+})();
+</script>

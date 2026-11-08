@@ -28,6 +28,13 @@ html = re.sub(r'<link rel="icon"[^>]*>', '<link rel="icon" type="image/x-icon" h
 html = re.sub(r'<link rel="apple-touch-icon"[^>]*>', '<link rel="apple-touch-icon" href="dxbi/icon-256.png">', html)
 html = re.sub(r'\s*<link rel="apple-touch-startup-image"[^>]*>', "", html)
 html = html.replace("</head>", '    <script src="dxbi/web.js"></script>\n</head>', 1)
+# dx.bi's own loading screen, painted from the very first frame (part of the page, so nothing of
+# Stremio's shows while its scripts start). It hands over to dx.bi's intro when that plays, or fades
+# into the app once dx.bi's look is on and there's something to show.
+boot = (web / "dxbi" / "boot.html").read_text()
+html = html.replace("</head>", boot.split("<!--body-->")[0] + "</head>", 1)
+html, n = re.subn(r"<body([^>]*)>", lambda mm: "<body" + mm.group(1) + ">" + boot.split("<!--body-->")[1], html, count=1)
+assert n == 1, "no <body> in index.html"
 page.write_text(html)
 
 # Installing it as an app (Add to Home Screen): dx.bi's name and icons

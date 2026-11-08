@@ -11,4 +11,4 @@ only answers Stremio's own sites).
 - Stremio's code is unchanged: Stremio/stremio-web at the tag in `.github/workflows/build.yml` (`STREMIO_WEB_REF`).
 - Licence: GPL-2.0, the same as stremio-web (see LICENSE.md). dx.bi itself: https://github.com/notdxbi/dxbi-stremio
 - Not affiliated with Stremio.
-- dx.bi part: `dxbi/web.js` (loads the latest released dx.bi in browsers) and `tools/brand.py` (name, icons, install details).
+- dx.bi part: `dxbi/web.js` (loads the latest released dx.bi in browsers), `dxbi/boot.html` (the loading screen) and `tools/brand.py` (name, icons, loading screen, install details).
