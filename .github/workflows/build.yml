@@ -1,0 +1,59 @@
+# Builds Stremio's open-source web app (stremio-web, GPL-2.0) at a pinned release and publishes it on
+# GitHub Pages, so dx.bi runs on its own copy instead of web.stremio.com. To update: change
+# STREMIO_WEB_REF, push, and test before pointing the apps at the new build.
+name: Build and publish
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  STREMIO_WEB_REF: v5.0.0-beta.43
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get stremio-web ${{ env.STREMIO_WEB_REF }}
+        uses: actions/checkout@v4
+        with:
+          repository: Stremio/stremio-web
+          ref: ${{ env.STREMIO_WEB_REF }}
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.8.0 --activate
+          pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+      - name: Record what was built
+        run: |
+          echo "stremio-web ${STREMIO_WEB_REF} ($(git rev-parse HEAD)), built $(date -u +%FT%TZ)" > build/dxbi-web-version.txt
+          ls build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
