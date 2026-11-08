@@ -7,6 +7,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # every day: the site picks up the latest dx.bi release
+  schedule:
+    - cron: "40 4 * * *"
 
 permissions:
   contents: read
@@ -30,6 +33,12 @@ jobs:
           repository: Stremio/stremio-web
           ref: ${{ env.STREMIO_WEB_REF }}
           fetch-depth: 1
+      - name: Get dx.bi (latest release) and this repository's branding
+        run: |
+          tag=$(curl -fsSL https://api.github.com/repos/notdxbi/dxbi-stremio/releases/latest | python3 -c "import json,sys; print(json.load(sys.stdin)['tag_name'])")
+          echo "DXBI_TAG=$tag" >> "$GITHUB_ENV"
+          git clone -q --depth 1 --branch "$tag" https://github.com/notdxbi/dxbi-stremio.git ../dxbi-stremio
+          git clone -q --depth 1 https://github.com/${{ github.repository }}.git ../dxbi-web
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -40,9 +49,14 @@ jobs:
           pnpm install --frozen-lockfile
       - name: Build
         run: pnpm build
+      - name: Dress it as dx.bi (name, icons, dx.bi built in)
+        run: |
+          python3 ../dxbi-web/tools/brand.py build ../dxbi-stremio ../dxbi-web
+          grep -q 'dxbi/web.js' build/index.html
+          grep -q '"name": "dx.bi"' build/manifest.json
       - name: Record what was built
         run: |
-          echo "stremio-web ${STREMIO_WEB_REF} ($(git rev-parse HEAD)), built $(date -u +%FT%TZ)" > build/dxbi-web-version.txt
+          echo "dx.bi ${DXBI_TAG} on stremio-web ${STREMIO_WEB_REF} ($(git rev-parse HEAD)), built $(date -u +%FT%TZ)" > build/dxbi-web-version.txt
           ls build
       - uses: actions/upload-pages-artifact@v3
         with:
